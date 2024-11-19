@@ -22,6 +22,7 @@ var banners = []string{"apple", "shadow", "standard", "thinkertoy"}
 
 func HandleAsciiArt(str string, subStr string, banner string, flags map[string]string) string {
 
+	fmt.Println(strings.ReplaceAll(str, "\n", "\\n"))
 	// // Read the banner file
 	baseFormat, err := readFile(banner + ".txt")
 	if err != nil {
