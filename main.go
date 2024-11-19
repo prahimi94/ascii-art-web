@@ -5,11 +5,11 @@ import (
 	"html/template"
 	"main/ascii-art"
 	"net/http"
-	"strings"
 )
 
 type ResultPageData struct {
 	Result string
+	Color  string
 }
 
 func handleForm(w http.ResponseWriter, r *http.Request) {
@@ -37,23 +37,23 @@ func handleAsciiWeb(w http.ResponseWriter, r *http.Request) {
 
 		//get string and convert it to proper input for ascii-art function
 		inputText := r.FormValue("text")
-		inputText = strings.ReplaceAll(inputText, "\r\n", "\n")
-		convertedText := strings.ReplaceAll(inputText, "\n", "\\n")
+
+		// convertedText := strings.ReplaceAll(inputText, "\n", "\\n")
 
 		banner := r.FormValue("banner")
 		color := r.FormValue("color")
 
 		flags := map[string]string{
-			"color":  color,
+			"color":  "",
 			"align":  "",
 			"output": "",
 		}
 
 		// Generate the ASCII art result
-		res := ascii.HandleAsciiArt(convertedText, convertedText, banner, flags)
+		res := ascii.HandleAsciiArt(inputText, inputText, banner, flags)
 
 		// Prepare data for the result page
-		resultData := ResultPageData{Result: res}
+		resultData := ResultPageData{Result: res, Color: color}
 
 		// Parse the HTML template
 		tmpl, err := template.ParseFiles("result.html")

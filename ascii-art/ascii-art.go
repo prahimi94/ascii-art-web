@@ -22,7 +22,6 @@ var banners = []string{"apple", "shadow", "standard", "thinkertoy"}
 
 func HandleAsciiArt(str string, subStr string, banner string, flags map[string]string) string {
 
-	fmt.Println(strings.ReplaceAll(str, "\n", "\\n"))
 	// // Read the banner file
 	baseFormat, err := readFile(banner + ".txt")
 	if err != nil {
@@ -90,59 +89,59 @@ func readFile(filename string) (string, error) {
 
 // printAsciiArt function: converts the input string to ASCII art and prints it
 func printAsciiArt(inputString string, subStr string, baseFormat string, flags map[string]string) string {
-	if flags["output"] != "" {
-		emptyOutputFile(flags["output"])
-	}
-
 	subIndexes := findSubStr(inputString, subStr)
 	const ASCII_HEIGHT = 8
 	const ASCII_OFFSET = 32
-
+	inputString = strings.ReplaceAll(inputString, "\r\n", "\\n")
+	inputLines := strings.Split(inputString, "\\n")
+	fmt.Println(inputLines)
 	asciiLines := strings.Split(baseFormat, "\n")
-	inputLength := len(inputString)
 	var outputData strings.Builder
 	var o string
 	// Process ASCII art for each row
-	for row := 1; row <= ASCII_HEIGHT; row++ {
-		var lineData strings.Builder
+	for _,inputString := range inputLines {
+		inputLength := len(inputString)
+		for row := 1; row <= ASCII_HEIGHT; row++ {
+			var lineData strings.Builder
 
-		for col := 0; col < inputLength; col++ {
-			char := inputString[col]
-			asciiIndex := int(char) - ASCII_OFFSET
-			lineNumber := (asciiIndex * (ASCII_HEIGHT + 1)) + row
+			for col := 0; col < inputLength; col++ {
+				char := inputString[col]
+				asciiIndex := int(char) - ASCII_OFFSET
+				lineNumber := (asciiIndex * (ASCII_HEIGHT + 1)) + row
 
-			if lineNumber < len(asciiLines) {
-				segment := asciiLines[lineNumber]
+				if lineNumber < len(asciiLines) {
+					segment := asciiLines[lineNumber]
 
-				// Check if the character is part of the substring to be colored
-				isColored := false
-				for _, startIdx := range subIndexes {
-					if col >= startIdx && col < startIdx+len(subStr) {
-						isColored = true
-						break
+					// Check if the character is part of the substring to be colored
+					isColored := false
+					for _, startIdx := range subIndexes {
+						if col >= startIdx && col < startIdx+len(subStr) {
+							isColored = true
+							break
+						}
+					}
+
+					if isColored && flags["color"] != "" {
+						coloredSegment := colorizeText(segment, []int{}, subStr, flags["color"])
+						lineData.WriteString(coloredSegment)
+					} else {
+						lineData.WriteString(segment)
 					}
 				}
-
-				if isColored && flags["color"] != "" {
-					coloredSegment := colorizeText(segment, []int{}, subStr, flags["color"])
-					lineData.WriteString(coloredSegment)
-				} else {
-					lineData.WriteString(segment)
-				}
 			}
-		}
 
-		outputText := lineData.String()
-		if flags["align"] != "" {
-			outputText = applyAlign(outputText, flags["align"], getTerminalWidth())
-		}
-		if lineData.Len() > 0 {
-			if flags["output"] == "" {
-				outputData.WriteString(outputText + "\n")
-				o += outputText + "\n"
-				fmt.Println(outputText)
-			} else {
-				outputToFile(flags["output"], outputText)
+			outputText := lineData.String()
+			if flags["align"] != "" {
+				outputText = applyAlign(outputText, flags["align"], getTerminalWidth())
+			}
+			if lineData.Len() > 0 {
+				if flags["output"] == "" {
+					outputData.WriteString(outputText + "\n")
+					o += outputText + "\n"
+					fmt.Println(outputText)
+				} else {
+					outputToFile(flags["output"], outputText)
+				}
 			}
 		}
 	}

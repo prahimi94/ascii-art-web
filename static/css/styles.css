@@ -24,7 +24,11 @@ body {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     overflow: hidden;
 }
-
+.result-box{
+    width: 100%;
+    min-height:300px;
+    overflow: scroll;
+}
 /* Header */
 header {
     background-color: #4a90e2;
