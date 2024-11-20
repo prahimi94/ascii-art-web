@@ -15,7 +15,6 @@ const (
 	OUTPUT_DIR = "./outputs"
 )
 
-
 func HandleAsciiArt(str string, subStr string, banner string, flags map[string]string) string {
 
 	// // Read the banner file
@@ -74,11 +73,13 @@ func validateInput(args []string) ([]string, error) {
 // readFile function: reads the content of a file and returns it as a string
 func readFile(filename string) (string, error) {
 	//set directory of banners
-	directory := os.DirFS("./banners")
+	directory := os.DirFS("backend/banners")
+
 	data, err := fs.ReadFile(directory, filename)
 	if err != nil {
 		return "", err
 	}
+
 	cleanedData := strings.ReplaceAll(string(data), "\r", "")
 	return string(cleanedData), nil
 }
@@ -87,11 +88,11 @@ func readFile(filename string) (string, error) {
 func printAsciiArt(inputString string, subStr string, baseFormat string, flags map[string]string) string {
 	const ASCII_HEIGHT = 8
 	const ASCII_OFFSET = 32
-	
+
 	inputString = strings.ReplaceAll(inputString, "\r\n", "\\n")
 	inputLines := strings.Split(inputString, "\\n")
 	asciiLines := strings.Split(baseFormat, "\n")
-	
+
 	var outputData string
 	var outputText string
 	// Process ASCII art for each row
