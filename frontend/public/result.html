@@ -6,14 +6,25 @@
         <link href="/static/css/styles.css" rel="stylesheet" >
     </head>
     <body>
+        <div id="BG">
+            <div id="container-inside">
+                <div id="circle-small"></div>
+                <div id="circle-medium"></div>
+                <div id="circle-large"></div>
+                <div id="circle-xlarge"></div>
+                <div id="circle-xxlarge"></div>
+            </div>
+        </div>
         <div class="container">
             <header>
 
             </header>
             <main>
-                <div>
-                    <textarea class="result-box" id="result" style="color:{{.Color}}; text-align:{{.Align}}">{{.Result}}</textarea>
-                    <a href="/" >Back to form</a>
+                <div class="result">
+                    <textarea class="result-box" id="result" style="color:{{.Color}}; text-align:{{.Align}};">{{.Result}}</textarea>
+                    <div class="btnDiv">
+                        <a class="btn-submit" href="/" >Back to form</a>
+                    </div>
                 </div>
             </main>
             <footer>

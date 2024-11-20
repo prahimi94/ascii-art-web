@@ -6,15 +6,24 @@
         <link href="/static/css/styles.css" rel="stylesheet" >
     </head>
     <body>
+        <div id="BG">
+            <div id="container-inside">
+                <div id="circle-small"></div>
+                <div id="circle-medium"></div>
+                <div id="circle-large"></div>
+                <div id="circle-xlarge"></div>
+                <div id="circle-xxlarge"></div>
+            </div>
+        </div>
         <div class="container">
             <header>
 
             </header>
             <main>
                 <div>
+                    <h1>CONVERT TEXT TO ASCII FORM</h1>
                     <form action="/ascii-web" method="POST" class="ascii-form">
-                        <h1>CONVERT TEXT TO ASCII FORM</h1>
-                        <textarea name="text" class="form-control" required></textarea>
+                        <textarea name="text" class="form-control" placeholder="text input ..." required></textarea>
                         <fieldset>
                             <legend>Banner</legend>
                             <label><input type="radio" name="banner" value="standard" checked> Standard</label>
