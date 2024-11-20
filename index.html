@@ -14,14 +14,25 @@
                 <div>
                     <form action="/ascii-web" method="POST" class="ascii-form">
                         <h1>CONVERT TEXT TO ASCII FORM</h1>
-                        <textarea name="text" class="form-control"></textarea>
+                        <textarea name="text" class="form-control" required></textarea>
                         <fieldset>
                             <legend>Banner</legend>
-                            <label><input type="radio" name="banner" value="standard" checked> Standard<label>
-                            <label><input type="radio" name="banner" value="shadow"> Shadow<label>
-                            <label><input type="radio" name="banner" value="thinkertoy"> Thinkertoy<label>
-                            <label><input type="radio" name="banner" value="apple"> Apple<label>
+                            <label><input type="radio" name="banner" value="standard" checked> Standard</label>
+                            <label><input type="radio" name="banner" value="shadow"> Shadow</label>
+                            <label><input type="radio" name="banner" value="thinkertoy"> Thinkertoy</label>
+                            <label><input type="radio" name="banner" value="apple"> Apple</label>
+                        </fieldset>
+                        <fieldset>
+                            <legend>Color</legend>
                             <label><input type="color" name="color" ><label>
+                        </fieldset>
+                        <fieldset>
+                            <legend>Align</legend>
+                            <select name="align" class="select-input">
+                                <option value="left" selected>Left</option>
+                                <option value="right">Right</option>
+                                <option value="center">Center</option>
+                            </select>
                         </fieldset>
                         <input type="submit" value="Submit" class="btn-submit">
                     </form>

@@ -3,16 +3,24 @@ package main
 import (
 	"fmt"
 	"html/template"
-	"main/ascii-art"
+	"mymain/ascii-art"
 	"net/http"
+	"os"
+	"slices"
 )
 
 type ResultPageData struct {
 	Result string
 	Color  string
+	Align  string
 }
 
 func handleForm(w http.ResponseWriter, r *http.Request) {
+
+	if r.URL.Path != "/" {
+		handleNotFound(w, r)
+		return
+	}
 	if r.Method == http.MethodGet {
 		tmpl, err := template.ParseFiles("index.html")
 		if err != nil {
@@ -25,6 +33,39 @@ func handleForm(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func handleNotFound(w http.ResponseWriter, r *http.Request) {
+	// If the URL is not exactly "/", respond with 404
+	tmpl, err := template.ParseFiles("frontend/errors/404.html")
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	w.WriteHeader(http.StatusNotFound)
+	tmpl.Execute(w, nil)
+}
+
+func handleServerErrors(w http.ResponseWriter, r *http.Request) {
+	// If there is an internal server error "/", respond with 500
+	tmpl, err := template.ParseFiles("frontend/errors/500.html")
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	w.WriteHeader(http.StatusInternalServerError)
+	tmpl.Execute(w, nil)
+}
+
+func handleBadRequest(w http.ResponseWriter, r *http.Request) {
+	// If the request has problems, respond with 400
+	tmpl, err := template.ParseFiles("frontend/errors/400.html")
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	w.WriteHeader(http.StatusBadRequest)
+	tmpl.Execute(w, nil)
+}
+
 func handleAsciiWeb(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodPost {
@@ -35,13 +76,28 @@ func handleAsciiWeb(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		//get string and convert it to proper input for ascii-art function
+		if len(r.FormValue("banner")) == 0 || len(r.FormValue("text")) == 0 {
+			handleBadRequest(w, r)
+			return
+		}
+
 		inputText := r.FormValue("text")
-
-		// convertedText := strings.ReplaceAll(inputText, "\n", "\\n")
-
 		banner := r.FormValue("banner")
 		color := r.FormValue("color")
+		align := r.FormValue("align")
+
+		var banners = []string{"apple", "shadow", "standard", "thinkertoy"}
+
+		if !slices.Contains(banners, banner) {
+			handleNotFound(w, r)
+			return
+		}
+		// // Read the banner file if exists
+		_, err = os.Stat("banners/" + banner + ".txt")
+		if os.IsNotExist(err) {
+			handleServerErrors(w, r)
+			return
+		}
 
 		flags := map[string]string{
 			"color":  "",
@@ -53,7 +109,7 @@ func handleAsciiWeb(w http.ResponseWriter, r *http.Request) {
 		res := ascii.HandleAsciiArt(inputText, inputText, banner, flags)
 
 		// Prepare data for the result page
-		resultData := ResultPageData{Result: res, Color: color}
+		resultData := ResultPageData{Result: res, Color: color, Align: align}
 
 		// Parse the HTML template
 		tmpl, err := template.ParseFiles("result.html")

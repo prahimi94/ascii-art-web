@@ -3,10 +3,7 @@ package ascii
 import (
 	"fmt"
 	"io/fs"
-	"math"
 	"os"
-	"os/exec"
-	"strconv"
 	"strings"
 )
 
@@ -18,7 +15,6 @@ const (
 	OUTPUT_DIR = "./outputs"
 )
 
-var banners = []string{"apple", "shadow", "standard", "thinkertoy"}
 
 func HandleAsciiArt(str string, subStr string, banner string, flags map[string]string) string {
 
@@ -89,18 +85,21 @@ func readFile(filename string) (string, error) {
 
 // printAsciiArt function: converts the input string to ASCII art and prints it
 func printAsciiArt(inputString string, subStr string, baseFormat string, flags map[string]string) string {
-	subIndexes := findSubStr(inputString, subStr)
 	const ASCII_HEIGHT = 8
 	const ASCII_OFFSET = 32
+	
 	inputString = strings.ReplaceAll(inputString, "\r\n", "\\n")
 	inputLines := strings.Split(inputString, "\\n")
-	fmt.Println(inputLines)
 	asciiLines := strings.Split(baseFormat, "\n")
-	var outputData strings.Builder
-	var o string
+	
+	var outputData string
+	var outputText string
 	// Process ASCII art for each row
-	for _,inputString := range inputLines {
+	for i, inputString := range inputLines {
 		inputLength := len(inputString)
+		if inputString == "" {
+			outputData += "\n"
+		}
 		for row := 1; row <= ASCII_HEIGHT; row++ {
 			var lineData strings.Builder
 
@@ -112,33 +111,19 @@ func printAsciiArt(inputString string, subStr string, baseFormat string, flags m
 				if lineNumber < len(asciiLines) {
 					segment := asciiLines[lineNumber]
 
-					// Check if the character is part of the substring to be colored
-					isColored := false
-					for _, startIdx := range subIndexes {
-						if col >= startIdx && col < startIdx+len(subStr) {
-							isColored = true
-							break
-						}
-					}
+					lineData.WriteString(segment)
 
-					if isColored && flags["color"] != "" {
-						coloredSegment := colorizeText(segment, []int{}, subStr, flags["color"])
-						lineData.WriteString(coloredSegment)
-					} else {
-						lineData.WriteString(segment)
-					}
 				}
 			}
 
-			outputText := lineData.String()
-			if flags["align"] != "" {
-				outputText = applyAlign(outputText, flags["align"], getTerminalWidth())
-			}
+			outputText = lineData.String()
+
 			if lineData.Len() > 0 {
 				if flags["output"] == "" {
-					outputData.WriteString(outputText + "\n")
-					o += outputText + "\n"
-					fmt.Println(outputText)
+					outputData += outputText
+					if i != len(inputLines)-1 || row != ASCII_HEIGHT {
+						outputData += "\n"
+					}
 				} else {
 					outputToFile(flags["output"], outputText)
 				}
@@ -146,153 +131,7 @@ func printAsciiArt(inputString string, subStr string, baseFormat string, flags m
 		}
 	}
 
-	return o
-}
-
-func getTerminalWidth() int {
-	cmd := exec.Command("stty", "size")
-	cmd.Stdin = os.Stdin // Use os.Stdin instead of exec.Stdin
-	output, err := cmd.Output()
-	if err != nil {
-		// Fallback to a default value if command fails
-		return 80
-	}
-
-	parts := strings.Fields(string(output))
-	if len(parts) < 2 {
-		return 80 // Default width for compatibility
-	}
-
-	width, err := strconv.Atoi(parts[1])
-	if err != nil {
-		return 80
-	}
-
-	return width
-}
-
-func applyAlign(text string, align string, termWidth int) string {
-	textLen := len(text)
-	if align == "right" && textLen < termWidth {
-		padding := termWidth - textLen
-		return strings.Repeat(" ", padding) + text
-	} else if align == "center" && textLen < termWidth {
-		padding := (termWidth - textLen) / 2
-		return strings.Repeat(" ", padding) + text
-	}
-	// Default to left-align if align type is unknown or fits in width
-	return text
-}
-
-func findSubStr(str, substr string) []int {
-	var indices []int
-	offset := 0
-	for {
-		index := strings.Index(str[offset:], substr)
-		if index == -1 {
-			break
-		}
-		indices = append(indices, offset+index)
-		offset += index + len(substr)
-	}
-	return indices
-}
-
-func colorizeText(inputText string, subIndexes []int, subStr string, color string) string {
-	colorMap := map[string]string{
-		"reset":   "\033[0m",
-		"red":     "\033[31m",
-		"green":   "\033[32m",
-		"yellow":  "\033[33m",
-		"blue":    "\033[34m",
-		"magenta": "\033[35m",
-		"cyan":    "\033[36m",
-		"gray":    "\033[37m",
-		"white":   "\033[97m",
-	}
-	colorCode := "\033[97m"
-
-	color = strings.ToLower(color)
-
-	if strings.HasPrefix(color, "rgb(") {
-		colorCode = convertRgbColorToANSII(color)
-	} else if strings.HasPrefix(color, "hsl(") {
-		rgbColor := convertHslColorToRgb(color)
-		colorCode = convertRgbColorToANSII(rgbColor)
-	} else {
-		colorCode = colorMap[color]
-	}
-
-	// Wrap the whole text if no specific indexes
-	if len(subIndexes) == 0 {
-		return colorCode + inputText + colorMap["reset"]
-	}
-
-	// Return the original text if color is not found
-	return inputText
-}
-
-func convertRgbColorToANSII(color string) string {
-	rgbs := strings.Split(strings.TrimSpace(color[4:len(color)-1]), ",")
-
-	red, err := strconv.Atoi(rgbs[0])
-	if checkError(err) {
-		os.Exit(1)
-	}
-	green, err := strconv.Atoi(rgbs[1])
-	if checkError(err) {
-		os.Exit(1)
-	}
-	blue, err := strconv.Atoi(rgbs[2])
-	if checkError(err) {
-		os.Exit(1)
-	}
-	return fmt.Sprintf("\033[38;2;%d;%d;%dm", red, green, blue)
-}
-
-// this part has error
-func convertHslColorToRgb(color string) string {
-	// Remove 'hsl(' and ')' and split by ','
-	color = strings.TrimPrefix(color, "hsl(")
-	color = strings.TrimSuffix(color, ")")
-	hslParts := strings.Split(color, ",")
-
-	// Parse H, S, L values from the string
-	h, _ := strconv.ParseFloat(strings.TrimSpace(hslParts[0]), 64)
-	s, _ := strconv.ParseFloat(strings.TrimSpace(hslParts[1]), 64)
-	l, _ := strconv.ParseFloat(strings.TrimSpace(hslParts[2]), 64)
-
-	// Convert percentages to fractions
-	s /= 100
-	l /= 100
-
-	c := (1 - math.Abs(2*l-1)) * s
-	x := c * (1 - math.Abs(math.Mod(h/60, 2)-1))
-	m := l - c/2
-
-	var r, g, b float64
-
-	switch {
-	case h >= 0 && h < 60:
-		r, g, b = c, x, 0
-	case h >= 60 && h < 120:
-		r, g, b = x, c, 0
-	case h >= 120 && h < 180:
-		r, g, b = 0, c, x
-	case h >= 180 && h < 240:
-		r, g, b = 0, x, c
-	case h >= 240 && h < 300:
-		r, g, b = x, 0, c
-	case h >= 300 && h < 360:
-		r, g, b = c, 0, x
-	}
-
-	// Convert to 0-255 range
-	r = (r + m) * 255
-	g = (g + m) * 255
-	b = (b + m) * 255
-
-	return fmt.Sprintf("rgb(%d, %d, %d)", int(r), int(g), int(b))
+	return outputData
 }
 
 func emptyOutputFile(filePath string) {
