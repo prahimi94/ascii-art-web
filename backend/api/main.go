@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"html/template"
+	"log"
 	ascii "mymain/backend/services"
 	"net/http"
 	"os"
@@ -24,7 +25,6 @@ func handleForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.Method == http.MethodGet {
-		fmt.Println(3)
 		tmpl, err := template.ParseFiles(publicUrl + "index.html")
 
 		if err != nil {
@@ -72,7 +72,6 @@ func handleBadRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleAsciiWeb(w http.ResponseWriter, r *http.Request) {
-
 	if r.Method == http.MethodPost {
 		// Parse the form data
 		err := r.ParseForm()
@@ -100,10 +99,10 @@ func handleAsciiWeb(w http.ResponseWriter, r *http.Request) {
 		// // Read the banner file if exists
 		_, err = os.Stat("backend/banners/" + banner + ".txt")
 		if os.IsNotExist(err) {
+			log.Println("inja2")
 			handleServerErrors(w, r)
 			return
 		}
-
 		flags := map[string]string{
 			"color":  "",
 			"align":  "",
@@ -122,25 +121,21 @@ func handleAsciiWeb(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
-
 		// Render the result page with the ASCII result
 		w.Header().Set("Content-Type", "text/html")
 		err = tmpl.Execute(w, resultData)
 		if err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}
-
-		//fmt.Fprintf(w, "<h1>Form Submission Result</h1>")
-		//fmt.Fprintln(w, "<textarea class='result-box'>"+res+"</textarea>")
 	} else {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 	}
 }
 
 func main() {
+	http.HandleFunc("/ascii-web", handleAsciiWeb)
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./frontend/public/static/"))))
 	http.HandleFunc("/", handleForm)
-	http.HandleFunc("/ascii-web", handleAsciiWeb)
 	// Start the server on port 8080
 	fmt.Println("Starting server on http://localhost:8080")
 	http.ListenAndServe(":8080", nil)

@@ -1,9 +1,12 @@
 package main
 
 import (
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -118,6 +121,12 @@ func TestHandleBadRequest(t *testing.T) {
 }
 
 func TestHandleAsciiWeb(t *testing.T) {
+	// Change to the root directory of the project
+	err := os.Chdir("../../")
+	if err != nil {
+		t.Fatalf("Error changing directory: %v", err)
+	}
+
 	// Prepare the handler and create a request
 	handler := http.HandlerFunc(handleAsciiWeb)
 
@@ -200,4 +209,126 @@ func TestHandleAsciiWeb(t *testing.T) {
 	} else {
 		log.Printf("TestHandleAsciiWeb - Missing banner and text: Received status %v, as expected", status)
 	}
+
+	// Audit tests
+	testCases := []struct {
+		name         string
+		formData     string
+		expectedFile string
+		expectedCode int
+	}{
+		{
+			"Case 1: 123 and <Hello> (World)!",
+			`banner=standard&text={123}\n<Hello> (World)!`,
+			"backend/api/tests/1.txt",
+			http.StatusOK,
+		},
+
+		{
+			"Case 2: 123 and <Hello> (World)!",
+			`banner=standard&text={123}\n<Hello> (World)!`,
+			"backend/api/tests/1.txt",
+			http.StatusOK,
+		},
+
+		{
+			"Case 3: 123 and <Hello> (World)!",
+			`banner=standard&text={123}\n<Hello> (World)!`,
+			"backend/api/tests/1.txt",
+			http.StatusOK,
+		},
+
+		{
+			"Case 4: 123 and <Hello> (World)!",
+			`banner=standard&text={123}\n<Hello> (World)!`,
+			"backend/api/tests/1.txt",
+			http.StatusOK,
+		},
+		 {"Case 2: 123??", "banner=standard&text=123??", "tests/2.txt", http.StatusOK},
+		 {"Case 3: $% \"= (shadow)", "banner=shadow&text=$%20%22%3D", "tests/3.txt", http.StatusOK},
+		 {"Case 4: 123 T/fs#R (thinkertoy)", "banner=thinkertoy&text=123%20T/fs#R", "tests/4.txt", http.StatusOK},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req, err := http.NewRequest("POST", "/ascii-web", strings.NewReader(tc.formData))
+			if err != nil {
+				t.Fatalf("Failed to create POST request: %v", err)
+			}
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+			rr := httptest.NewRecorder()
+			handler.ServeHTTP(rr, req)
+
+			// Verify HTTP status code
+			if rr.Code != tc.expectedCode {
+				t.Errorf("Expected status %v, got %v", tc.expectedCode, rr.Code)
+			}
+			// Load expected output from file and compare
+			expectedContent, err := ioutil.ReadFile(tc.expectedFile)
+			if err != nil {
+				t.Fatalf("Failed to read expected file %v: %v", tc.expectedFile, err)
+			}
+
+			//log.Println(extractDivValueByID(rr.Body.String()))
+
+			if extractDivValueByID(rr.Body.String()) != string(expectedContent) {
+				t.Errorf("Expected output:\n%v\nGot:\n%v", string(expectedContent), extractDivValueByID(rr.Body.String()))
+			}
+		})
+	}
+}
+func extractTextareaText(htmlContent string) string {
+	//log.Println(htmlContent)
+	// Define a regular expression to match the content inside the <textarea> with id="result"
+	re := regexp.MustCompile(`<textarea[^>]*>(.*?)</textarea>`)
+	match := re.FindStringSubmatch(htmlContent)
+	//log.Println(match)
+	if len(match) < 2 {
+		return "er"
+	}
+
+	// The inner content will be the second element in the match slice
+	return match[1]
+}
+
+func extractDivValueByID(html string) string {
+	//log.Println(html)
+	startTag := `<textarea class="result-box" id="result" style="color:; text-align:;">`
+	endTag := `</textarea>`
+
+	// Find the start index of the desired <div>
+	startIndex := strings.Index(html, startTag)
+	if startIndex == -1 {
+		return "e1"
+	}
+	startIndex += len(startTag)
+
+	// Find the end index of the </div>
+	endIndex := strings.Index(html[startIndex:], endTag)
+	if endIndex == -1 {
+		return "e2"
+	}
+
+	// Extract and return the content
+	return decodeHTMLEntities(html[startIndex : startIndex+endIndex])
+}
+
+// Function to replace HTML entities manually
+func decodeHTMLEntities(input string) string {
+	// Replacing the common HTML entities with their corresponding characters
+	replacements := map[string]string{
+		"&lt;":   "<",
+		"&gt;":   ">",
+		"&amp;":  "&",
+		"&quot;": "\"",
+		"&#39;":  "'",
+	}
+
+	// Loop through the map and replace the entities in the input string
+	for entity, char := range replacements {
+		input = strings.ReplaceAll(input, entity, char)
+	}
+
+	return input
 }

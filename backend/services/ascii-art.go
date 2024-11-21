@@ -3,6 +3,7 @@ package ascii
 import (
 	"fmt"
 	"io/fs"
+	"log"
 	"os"
 	"strings"
 )
@@ -16,10 +17,12 @@ const (
 )
 
 func HandleAsciiArt(str string, subStr string, banner string, flags map[string]string) string {
-
+	log.Println("inja3")
+	log.Println(str)
 	// // Read the banner file
 	baseFormat, err := readFile(banner + ".txt")
 	if err != nil {
+		log.Println("inja4")
 		fmt.Println("Error reading file:", err)
 		os.Exit(1)
 	}
