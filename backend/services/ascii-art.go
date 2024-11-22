@@ -3,7 +3,6 @@ package ascii
 import (
 	"fmt"
 	"io/fs"
-	"log"
 	"os"
 	"strings"
 )
@@ -11,67 +10,59 @@ import (
 // initialize flags prefix
 const (
 	// OUTPUT_FLAG = "--output="
-	// COLOR_FLAG = "--color="
-	// ALIGN_FLAG = "--align="
 	OUTPUT_DIR = "./outputs"
 )
 
-func HandleAsciiArt(str string, subStr string, banner string, flags map[string]string) string {
-	log.Println("inja3")
-	log.Println(str)
+func HandleAsciiArt(str string, banner string, flags map[string]string) string {
 	// // Read the banner file
 	baseFormat, err := readFile(banner + ".txt")
 	if err != nil {
-		log.Println("inja4")
 		fmt.Println("Error reading file:", err)
 		os.Exit(1)
 	}
 
 	// Process and print ASCII art for the input string
-	oo := printAsciiArt(str, subStr, baseFormat, flags)
-	fmt.Println(oo)
-	return oo
+	result := printAsciiArt(str, baseFormat, flags)
+	return result
 }
 
-func checkInvalidFlags() {
-	// Define allowed flags
-	allowedFlags := map[string]bool{
-		"color":  true,
-		"align":  true,
-		"output": true,
-	}
-
-	// Iterate over the command-line arguments (excluding the program name)
-	for _, arg := range os.Args[1:] {
-		// Extract flag name (everything before the '=' sign or flag itself)
-		if strings.HasPrefix(arg, "--") {
-			// Get the flag name (before '=' if present)
-			flagName := strings.TrimPrefix(arg, "--")
-			flagName = strings.Split(flagName, "=")[0] // Get the part before '='
-
-			// If the flag name is not allowed, print an error and exit
-			if !allowedFlags[flagName] {
-				fmt.Printf("Usage: go run . [OPTION] [STRING]\nEX: go run . --color=<color> <substring to be colored> something\n")
-				os.Exit(1)
-			}
-		}
-	}
-}
-
-// validateInput function: checks if the command-line input is valid
-func validateInput(args []string) ([]string, error) {
-	//go run . [OPTION] [STRING] [BANNER]
-	switch len(args) {
-	case 3:
-		return []string{args[0], args[1], args[2]}, nil
-	case 2:
-		return []string{args[0], args[1]}, nil
-	case 1:
-		return []string{args[0]}, nil
-	default:
-		return []string{}, fmt.Errorf("\nUsage: go run . [OPTION] [STRING] [BANNER]\n\nEX: go run . flag something standard\n")
-	}
-}
+// func checkInvalidFlags() {
+// 	// Define allowed flags
+// 	allowedFlags := map[string]bool{
+// 		"output": true,
+// 	}
+//
+// 	// Iterate over the command-line arguments (excluding the program name)
+// 	for _, arg := range os.Args[1:] {
+// 		// Extract flag name (everything before the '=' sign or flag itself)
+// 		if strings.HasPrefix(arg, "--") {
+// 			// Get the flag name (before '=' if present)
+// 			flagName := strings.TrimPrefix(arg, "--")
+// 			flagName = strings.Split(flagName, "=")[0] // Get the part before '='
+//
+// 			// If the flag name is not allowed, print an error and exit
+// 			if !allowedFlags[flagName] {
+// 				fmt.Printf("Usage: go run . [OPTION] [STRING]\nEX: go run . something\n")
+// 				os.Exit(1)
+// 			}
+// 		}
+// 	}
+// }
+//
+// // validateInput function: checks if the command-line input is valid
+// func validateInput(args []string) ([]string, error) {
+// 	//go run . [OPTION] [STRING] [BANNER]
+// 	switch len(args) {
+// 	case 3:
+// 		return []string{args[0], args[1], args[2]}, nil
+// 	case 2:
+// 		return []string{args[0], args[1]}, nil
+// 	case 1:
+// 		return []string{args[0]}, nil
+// 	default:
+// 		return []string{}, fmt.Errorf("\nUsage: go run . [OPTION] [STRING] [BANNER]\n\nEX: go run . flag something standard\n")
+// 	}
+// }
 
 // readFile function: reads the content of a file and returns it as a string
 func readFile(filename string) (string, error) {
@@ -88,7 +79,7 @@ func readFile(filename string) (string, error) {
 }
 
 // printAsciiArt function: converts the input string to ASCII art and prints it
-func printAsciiArt(inputString string, subStr string, baseFormat string, flags map[string]string) string {
+func printAsciiArt(inputString string, baseFormat string, flags map[string]string) string {
 	const ASCII_HEIGHT = 8
 	const ASCII_OFFSET = 32
 

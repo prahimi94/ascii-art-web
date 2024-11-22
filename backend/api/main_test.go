@@ -12,6 +12,11 @@ import (
 )
 
 func TestHandleForm(t *testing.T) {
+	// Change to the root directory of the project
+	err := os.Chdir("../../")
+	if err != nil {
+		t.Fatalf("Error changing directory: %v", err)
+	}
 	// Test for GET request
 	log.Println("Starting TestHandleForm - GET request")
 	req, err := http.NewRequest("GET", "/", nil)
@@ -35,7 +40,8 @@ func TestHandleForm(t *testing.T) {
 	}
 
 	// Check if the response contains the correct content (assuming the HTML file is served)
-	expected := "<html>" // Add a unique identifier that would appear in the HTML
+	expected := `<p>ASCII-ART-WEB by PR & MR</p>` // Add a unique identifier that would appear in the HTML
+
 	if !strings.Contains(rr.Body.String(), expected) {
 		log.Printf("TestHandleForm - GET request: Expected content not found in response body")
 		t.Errorf("handleForm returned unexpected body: got %v want %v", rr.Body.String(), expected)
@@ -60,72 +66,121 @@ func TestHandleForm(t *testing.T) {
 	}
 }
 
-func TestHandleNotFound(t *testing.T) {
-	log.Println("Starting TestHandleNotFound")
-	req, err := http.NewRequest("GET", "/nonexistent", nil)
-	if err != nil {
-		log.Fatalf("Failed to create GET request: %v", err)
+func TestHandleErrorPage(t *testing.T) {
+	testCases := []struct {
+		name         string
+		errorType    ErrorPageData
+		expectedCode int
+		expectedBody string
+	}{
+		{
+			name:         "Test 404 Not Found",
+			errorType:    NotFoundError,
+			expectedCode: http.StatusNotFound,
+			expectedBody: "Page not found",
+		},
+		{
+			name:         "Test 400 Bad Request",
+			errorType:    BadRequestError,
+			expectedCode: http.StatusBadRequest,
+			expectedBody: "Bad request",
+		},
+		{
+			name:         "Test 500 Internal Server Error",
+			errorType:    InternalServerError,
+			expectedCode: http.StatusInternalServerError,
+			expectedBody: "Internal server error",
+		},
 	}
 
-	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(handleNotFound)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest("GET", "/", nil)
+			w := httptest.NewRecorder()
 
-	handler.ServeHTTP(rr, req)
+			handleErrorPage(w, req, tc.errorType)
 
-	if status := rr.Code; status != http.StatusNotFound {
-		log.Printf("TestHandleNotFound: Expected status %v, got %v", http.StatusNotFound, status)
-		t.Errorf("handleNotFound returned wrong status code: got %v want %v", status, http.StatusNotFound)
-	} else {
-		log.Printf("TestHandleNotFound: Received status %v, as expected", status)
-	}
-}
+			// get result
+			res := w.Result()
+			defer res.Body.Close()
 
-func TestHandleServerErrors(t *testing.T) {
-	log.Println("Starting TestHandleServerErrors")
-	req, err := http.NewRequest("GET", "/server-error", nil)
-	if err != nil {
-		log.Fatalf("Failed to create GET request: %v", err)
-	}
+			// check http status code
+			if res.StatusCode != tc.expectedCode {
+				t.Errorf("Expected status code %d, but got %d", tc.expectedCode, res.StatusCode)
+			}
 
-	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(handleServerErrors)
-
-	handler.ServeHTTP(rr, req)
-
-	if status := rr.Code; status != http.StatusInternalServerError {
-		log.Printf("TestHandleServerErrors: Expected status %v, got %v", http.StatusInternalServerError, status)
-		t.Errorf("handleServerErrors returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
-	} else {
-		log.Printf("TestHandleServerErrors: Received status %v, as expected", status)
-	}
-}
-
-func TestHandleBadRequest(t *testing.T) {
-	log.Println("Starting TestHandleBadRequest")
-	req, err := http.NewRequest("GET", "/bad-request", nil)
-	if err != nil {
-		log.Fatalf("Failed to create GET request: %v", err)
-	}
-
-	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(handleBadRequest)
-
-	handler.ServeHTTP(rr, req)
-
-	if status := rr.Code; status != http.StatusBadRequest {
-		log.Printf("TestHandleBadRequest: Expected status %v, got %v", http.StatusBadRequest, status)
-		t.Errorf("handleBadRequest returned wrong status code: got %v want %v", status, http.StatusBadRequest)
-	} else {
-		log.Printf("TestHandleBadRequest: Received status %v, as expected", status)
+			// check response content
+			body := w.Body.String()
+			if !strings.Contains(body, tc.expectedBody) {
+				t.Errorf("Expected body to contain '%s', but got '%s'", tc.expectedBody, body)
+			}
+		})
 	}
 }
+
+// func TestHandleNotFound(t *testing.T) {
+
+// 	log.Println("Starting TestHandleNotFound")
+// 	req, err := http.NewRequest("GET", "/nonexistent", nil)
+// 	if err != nil {
+// 		log.Fatalf("Failed to create GET request: %v", err)
+// 	}
+
+// 	rr := httptest.NewRecorder()
+// 	handler := http.HandlerFunc(handleNotFound)
+
+// 	handler.ServeHTTP(rr, req)
+
+// 	if status := rr.Code; status != http.StatusNotFound {
+// 		log.Printf("TestHandleNotFound: Expected status %v, got %v", http.StatusNotFound, status)
+// 		t.Errorf("handleNotFound returned wrong status code: got %v want %v", status, http.StatusNotFound)
+// 	} else {
+// 		log.Printf("TestHandleNotFound: Received status %v, as expected", status)
+// 	}
+// }
+
+// func TestHandleServerErrors(t *testing.T) {
+// 	log.Println("Starting TestHandleServerErrors")
+// 	req, err := http.NewRequest("GET", "/server-error", nil)
+// 	if err != nil {
+// 		log.Fatalf("Failed to create GET request: %v", err)
+// 	}
+
+// 	rr := httptest.NewRecorder()
+// 	handler := http.HandlerFunc(handleServerErrors)
+
+// 	handler.ServeHTTP(rr, req)
+
+// 	if status := rr.Code; status != http.StatusInternalServerError {
+// 		log.Printf("TestHandleServerErrors: Expected status %v, got %v", http.StatusInternalServerError, status)
+// 		t.Errorf("handleServerErrors returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+// 	} else {
+// 		log.Printf("TestHandleServerErrors: Received status %v, as expected", status)
+// 	}
+// }
+
+// func TestHandleBadRequest(t *testing.T) {
+// 	log.Println("Starting TestHandleBadRequest")
+// 	req, err := http.NewRequest("GET", "/bad-request", nil)
+// 	if err != nil {
+// 		log.Fatalf("Failed to create GET request: %v", err)
+// 	}
+
+// 	rr := httptest.NewRecorder()
+// 	handler := http.HandlerFunc(handleBadRequest)
+
+// 	handler.ServeHTTP(rr, req)
+
+// 	if status := rr.Code; status != http.StatusBadRequest {
+// 		log.Printf("TestHandleBadRequest: Expected status %v, got %v", http.StatusBadRequest, status)
+// 		t.Errorf("handleBadRequest returned wrong status code: got %v want %v", status, http.StatusBadRequest)
+// 	} else {
+// 		log.Printf("TestHandleBadRequest: Received status %v, as expected", status)
+// 	}
+// }
 
 func TestHandleAsciiWeb(t *testing.T) {
 	// Change to the root directory of the project
-	err := os.Chdir("../../")
-	if err != nil {
-		t.Fatalf("Error changing directory: %v", err)
-	}
 
 	// Prepare the handler and create a request
 	handler := http.HandlerFunc(handleAsciiWeb)
@@ -225,28 +280,25 @@ func TestHandleAsciiWeb(t *testing.T) {
 		},
 
 		{
-			"Case 2: 123 and <Hello> (World)!",
-			`banner=standard&text={123}\n<Hello> (World)!`,
-			"backend/api/tests/1.txt",
+			"Case 2: 123??",
+			`banner=standard&text=123??`,
+			"backend/api/tests/2.txt",
 			http.StatusOK,
 		},
 
 		{
-			"Case 3: 123 and <Hello> (World)!",
-			`banner=standard&text={123}\n<Hello> (World)!`,
-			"backend/api/tests/1.txt",
+			"Case 3: $% \"= (shadow)",
+			`banner=shadow&text=%24%25%20%22%3D`,
+			"backend/api/tests/3.txt",
 			http.StatusOK,
 		},
 
 		{
-			"Case 4: 123 and <Hello> (World)!",
-			`banner=standard&text={123}\n<Hello> (World)!`,
-			"backend/api/tests/1.txt",
+			"Case 4: 123 T/fs#R (thinkertoy)",
+			`banner=thinkertoy&text=123%20T%2Ffs%23R`,
+			"backend/api/tests/4.txt",
 			http.StatusOK,
 		},
-		 {"Case 2: 123??", "banner=standard&text=123??", "tests/2.txt", http.StatusOK},
-		 {"Case 3: $% \"= (shadow)", "banner=shadow&text=$%20%22%3D", "tests/3.txt", http.StatusOK},
-		 {"Case 4: 123 T/fs#R (thinkertoy)", "banner=thinkertoy&text=123%20T/fs#R", "tests/4.txt", http.StatusOK},
 	}
 
 	for _, tc := range testCases {
@@ -271,7 +323,8 @@ func TestHandleAsciiWeb(t *testing.T) {
 			}
 
 			//log.Println(extractDivValueByID(rr.Body.String()))
-
+			//fmt.Printf("Expected:\n%q\n", expectedContent)
+			//fmt.Printf("Got:\n%q\n", extractDivValueByID(rr.Body.String()))
 			if extractDivValueByID(rr.Body.String()) != string(expectedContent) {
 				t.Errorf("Expected output:\n%v\nGot:\n%v", string(expectedContent), extractDivValueByID(rr.Body.String()))
 			}
