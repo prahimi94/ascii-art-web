@@ -186,7 +186,7 @@ func TestHandleAsciiWeb(t *testing.T) {
 	handler := http.HandlerFunc(handleAsciiWeb)
 
 	// Test valid POST request with valid form data
-	formData := "banner=apple&text=hello&color=red&align=center"
+	formData := "banner=standard&text=hello&color=red&align=center"
 	log.Printf("TestHandleAsciiWeb - Valid request: %s", formData)
 	req, err := http.NewRequest("POST", "/ascii-web", strings.NewReader(formData))
 	if err != nil {
@@ -206,7 +206,7 @@ func TestHandleAsciiWeb(t *testing.T) {
 	}
 
 	// Test invalid POST data (missing 'text' field)
-	formData = "banner=apple&text=&color=red&align=center"
+	formData = "banner=standard&text=&color=red&align=center"
 	log.Printf("TestHandleAsciiWeb - Invalid POST data: %s", formData)
 	req, err = http.NewRequest("POST", "/ascii-web", strings.NewReader(formData))
 	if err != nil {

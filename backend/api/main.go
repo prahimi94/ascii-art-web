@@ -102,7 +102,7 @@ func handleAsciiWeb(w http.ResponseWriter, r *http.Request) {
 		color := r.FormValue("color")
 		align := r.FormValue("align")
 
-		var banners = []string{"apple", "shadow", "standard", "thinkertoy"}
+		var banners = []string{"dot", "shadow", "standard", "thinkertoy"}
 
 		if !slices.Contains(banners, banner) {
 			// handleNotFound(w, r)
