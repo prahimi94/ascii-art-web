@@ -23,7 +23,6 @@ func TestHandleForm(t *testing.T) {
 	if err != nil {
 		log.Fatalf("Failed to create GET request: %v", err)
 	}
-
 	// Create a response recorder to capture the response
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(handleForm)
@@ -118,69 +117,7 @@ func TestHandleErrorPage(t *testing.T) {
 	}
 }
 
-// func TestHandleNotFound(t *testing.T) {
-
-// 	log.Println("Starting TestHandleNotFound")
-// 	req, err := http.NewRequest("GET", "/nonexistent", nil)
-// 	if err != nil {
-// 		log.Fatalf("Failed to create GET request: %v", err)
-// 	}
-
-// 	rr := httptest.NewRecorder()
-// 	handler := http.HandlerFunc(handleNotFound)
-
-// 	handler.ServeHTTP(rr, req)
-
-// 	if status := rr.Code; status != http.StatusNotFound {
-// 		log.Printf("TestHandleNotFound: Expected status %v, got %v", http.StatusNotFound, status)
-// 		t.Errorf("handleNotFound returned wrong status code: got %v want %v", status, http.StatusNotFound)
-// 	} else {
-// 		log.Printf("TestHandleNotFound: Received status %v, as expected", status)
-// 	}
-// }
-
-// func TestHandleServerErrors(t *testing.T) {
-// 	log.Println("Starting TestHandleServerErrors")
-// 	req, err := http.NewRequest("GET", "/server-error", nil)
-// 	if err != nil {
-// 		log.Fatalf("Failed to create GET request: %v", err)
-// 	}
-
-// 	rr := httptest.NewRecorder()
-// 	handler := http.HandlerFunc(handleServerErrors)
-
-// 	handler.ServeHTTP(rr, req)
-
-// 	if status := rr.Code; status != http.StatusInternalServerError {
-// 		log.Printf("TestHandleServerErrors: Expected status %v, got %v", http.StatusInternalServerError, status)
-// 		t.Errorf("handleServerErrors returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
-// 	} else {
-// 		log.Printf("TestHandleServerErrors: Received status %v, as expected", status)
-// 	}
-// }
-
-// func TestHandleBadRequest(t *testing.T) {
-// 	log.Println("Starting TestHandleBadRequest")
-// 	req, err := http.NewRequest("GET", "/bad-request", nil)
-// 	if err != nil {
-// 		log.Fatalf("Failed to create GET request: %v", err)
-// 	}
-
-// 	rr := httptest.NewRecorder()
-// 	handler := http.HandlerFunc(handleBadRequest)
-
-// 	handler.ServeHTTP(rr, req)
-
-// 	if status := rr.Code; status != http.StatusBadRequest {
-// 		log.Printf("TestHandleBadRequest: Expected status %v, got %v", http.StatusBadRequest, status)
-// 		t.Errorf("handleBadRequest returned wrong status code: got %v want %v", status, http.StatusBadRequest)
-// 	} else {
-// 		log.Printf("TestHandleBadRequest: Received status %v, as expected", status)
-// 	}
-// }
-
 func TestHandleAsciiWeb(t *testing.T) {
-	// Change to the root directory of the project
 
 	// Prepare the handler and create a request
 	handler := http.HandlerFunc(handleAsciiWeb)
@@ -321,10 +258,6 @@ func TestHandleAsciiWeb(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to read expected file %v: %v", tc.expectedFile, err)
 			}
-
-			//log.Println(extractDivValueByID(rr.Body.String()))
-			//fmt.Printf("Expected:\n%q\n", expectedContent)
-			//fmt.Printf("Got:\n%q\n", extractDivValueByID(rr.Body.String()))
 			if extractDivValueByID(rr.Body.String()) != string(expectedContent) {
 				t.Errorf("Expected output:\n%v\nGot:\n%v", string(expectedContent), extractDivValueByID(rr.Body.String()))
 			}
@@ -332,11 +265,9 @@ func TestHandleAsciiWeb(t *testing.T) {
 	}
 }
 func extractTextareaText(htmlContent string) string {
-	//log.Println(htmlContent)
 	// Define a regular expression to match the content inside the <textarea> with id="result"
 	re := regexp.MustCompile(`<textarea[^>]*>(.*?)</textarea>`)
 	match := re.FindStringSubmatch(htmlContent)
-	//log.Println(match)
 	if len(match) < 2 {
 		return "er"
 	}
@@ -346,23 +277,21 @@ func extractTextareaText(htmlContent string) string {
 }
 
 func extractDivValueByID(html string) string {
-	//log.Println(html)
 	startTag := `<textarea class="result-box" id="result" style="color:; text-align:;">`
 	endTag := `</textarea>`
 
 	// Find the start index of the desired <div>
 	startIndex := strings.Index(html, startTag)
 	if startIndex == -1 {
-		return "e1"
+		return "Error - Call Support"
 	}
 	startIndex += len(startTag)
 
 	// Find the end index of the </div>
 	endIndex := strings.Index(html[startIndex:], endTag)
 	if endIndex == -1 {
-		return "e2"
+		return "Error - Call Support"
 	}
-
 	// Extract and return the content
 	return decodeHTMLEntities(html[startIndex : startIndex+endIndex])
 }
