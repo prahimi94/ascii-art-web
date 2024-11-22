@@ -35,3 +35,13 @@ ASCII Art Web is a web-based application that converts text input into visually 
 4. You can run test from root with this command:
     ```arduino
     go test ./...
+
+
+## Project Structure and Implementation
+Project has 2 main components
+
+Backend: Include webserver, Api, Tests, AsciiArt service and Banners
+
+Frontend: Include html templates, error files and assets
+
+In the root of the project there is a runner file to run project from the root while keep structure of the project organized.
